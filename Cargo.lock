@@ -1042,7 +1042,6 @@ dependencies = [
  "enum-map",
  "noise",
  "quicksilver",
- "simdnoise",
 ]
 
 [[package]]
@@ -1246,28 +1245,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "paste"
-version = "0.1.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab4fb1930692d1b6a9cfabdde3d06ea0a7d186518e2f4d67660d8970e2fa647a"
-dependencies = [
- "paste-impl",
- "proc-macro-hack",
-]
-
-[[package]]
-name = "paste-impl"
-version = "0.1.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a62486e111e571b1e93b710b61e8f493c0013be39629b714cb166bdb06aa5a8a"
-dependencies = [
- "proc-macro-hack",
- "proc-macro2 1.0.10",
- "quote 1.0.3",
- "syn 1.0.17",
-]
-
-[[package]]
 name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1362,12 +1339,6 @@ name = "precomputed-hash"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "925383efa346730478fb4838dbe9137d2a47675ad789c546d150a6e1dd4ab31c"
-
-[[package]]
-name = "proc-macro-hack"
-version = "0.5.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d659fe7c6d27f25e9d80a1a094c223f5246f6a6596453e09d7229bf42750b63"
 
 [[package]]
 name = "proc-macro2"
@@ -1829,25 +1800,6 @@ checksum = "5a9e7e0f2bfae24d8a5b5a66c5b257a83c7412304311512a0c054cd5e619da11"
 dependencies = [
  "lazy_static 1.4.0",
  "libc",
-]
-
-[[package]]
-name = "simdeez"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a818d354713feb3fe6db6df2b5232f4a3901c6533c686b4376aaf4b93adb9c5f"
-dependencies = [
- "cfg-if",
- "paste",
-]
-
-[[package]]
-name = "simdnoise"
-version = "3.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d12c11e4f55bf8237d46300c7b616068bff75f061927816f41355e1d0addb02"
-dependencies = [
- "simdeez",
 ]
 
 [[package]]

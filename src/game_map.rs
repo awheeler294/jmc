@@ -142,20 +142,12 @@ impl GameMap {
     /// is located in
     /// Return (x_min, x_max, y_min, y_max, z_min, z_max)
     fn get_chunck_boundries(x: u32, y: u32, z: u32, chunk_size: u32) -> (u32, u32, u32, u32, u32, u32) {
-        
-        let increment_away_from_zero = |n| {
-            if n >= 0 {
-                n + 1
-            } else {
-                n - 1
-            }
-        };
 
         // prevents off-by-one errors when 
         // coordinates fall directly on chunk boundries
-        let cx = increment_away_from_zero(x);
-        let cy = increment_away_from_zero(y);
-        let cz = increment_away_from_zero(z);
+        let cx = x + 1;
+        let cy = y + 1;
+        let cz = z + 1;
 
         let (x_min, x_max) = GameMap::round_to_boundries(cx, chunk_size);
         let (y_min, y_max) = GameMap::round_to_boundries(cy, chunk_size);
@@ -166,24 +158,15 @@ impl GameMap {
 
     /// Find the nearest multiples of m that n is located between. Ex
     /// round_to_boundries(100, 64) should return (64, 128), the two
-    /// multiples of 64 that 100 is located between. *Zero*: Zero is
-    /// defined as being part of the segment 0..64, and is NOT part 
-    /// of the segment 0..-64, that segment starts at -1. This avoids 
-    /// having two different chunks that contain coordinates with zeros.
+    /// multiples of 64 that 100 is located between.
     /// Return (n_min, n_max)
     fn round_to_boundries(n: u32, m: u32) -> (u32, u32) {
-        if n > 0 {
+        if n == 0 {                                                       
+            (0, m)
+        } else {
             let max = ((n + m - 1) / m) * m;
             let min = max - m;
             (min, max)
-        }
-        else if n == 0 {
-            (0, m)
-        }
-        else {
-            let max = ((n - m + 1) / m) * m;
-            let min = max + m;
-            (max, min)
         }
     }
 }
@@ -202,7 +185,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_compute_boundries_0() {
+    fn test_round_to_boundries_0() {
         let n = 0;
         let m = 64;
         let (min, max) = GameMap::round_to_boundries(n, m);
@@ -213,7 +196,7 @@ mod tests {
     }
 
     #[test]
-    fn test_compute_boundries_1() {
+    fn test_round_to_boundries_1() {
         let n = 1;
         let m = 64;
         let (min, max) = GameMap::round_to_boundries(n, m);
@@ -224,7 +207,7 @@ mod tests {
     }
 
     #[test]
-    fn test_compute_boundries_63() {
+    fn test_round_to_boundries_63() {
         let n = 63;
         let m = 64;
         let (min, max) = GameMap::round_to_boundries(n, m);
@@ -235,7 +218,7 @@ mod tests {
     }
 
     #[test]
-    fn test_compute_boundries_64() {
+    fn test_round_to_boundries_64() {
         let n = 64;
         let m = 64;
         let (min, max) = GameMap::round_to_boundries(n, m);
@@ -246,7 +229,7 @@ mod tests {
     }
 
     #[test]
-    fn test_compute_boundries_128() {
+    fn test_round_to_boundries_128() {
         let n = 128;
         let m = 64;
         let (min, max) = GameMap::round_to_boundries(n, m);
@@ -257,7 +240,7 @@ mod tests {
     }
 
     #[test]
-    fn test_compute_boundries_129() {
+    fn test_round_to_boundries_129() {
         let n = 129;
         let m = 64;
         let (min, max) = GameMap::round_to_boundries(n, m);
@@ -268,7 +251,7 @@ mod tests {
     }
 
     #[test]
-    fn test_compute_boundries_192() {
+    fn test_round_to_boundries_192() {
         let n = 192;
         let m = 64;
         let (min, max) = GameMap::round_to_boundries(n, m);
@@ -279,7 +262,7 @@ mod tests {
     }
 
     #[test]
-    fn test_compute_boundries_175() {
+    fn test_round_to_boundries_175() {
         let n = 175;
         let m = 64;
         let (min, max) = GameMap::round_to_boundries(n, m);
