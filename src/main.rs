@@ -9,6 +9,7 @@ mod color_scheme;
 
 const FONT_MONONOKI: &'static str = "mononoki-Regular.ttf";
 const FONT_SQUARE: &'static str = "square.ttf";
+const FONT_ZODIAC_SQUARE: &'static str = "zodiac-square.ttf";
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct Position<T> {
@@ -73,6 +74,43 @@ impl Camera {
     }
 }
 
+struct Tileset {
+    tile_map: HashMap<char, Image>,
+}
+
+impl Tileset {
+
+    fn new(glyph_map: Vec<(String, String)>, tile_size_px: Vector) -> Tileset {
+        Tileset {
+            tile_map: Tileset::render(glyph_map, tile_size_px),
+        }
+    }
+    
+    fn render(glyph_map: Vec<(String, String)>, tile_size_px: Vector) 
+        -> HashMap<char, Image> {
+
+        let mut tile_map = HashMap::new();
+        for (font_name, glyphs) in glyph_map {
+            tile_map.extend(Font::load(font_name).and_then(move |font: Font| {
+                let tiles = font
+                    .render(glyphs.as_str(), &FontStyle::new(tile_size_px.y, Color::WHITE))
+                    .expect("could not render tileset.");
+                let mut tile_map = HashMap::new();
+                for (index, glyph) in glyphs.chars().enumerate() {
+                    let pos = (index as u32 * tile_size_px.x as u32, 0);
+                    let tile = tiles.subimage(Rectangle::new(pos, tile_size_px));
+                    tile_map.insert(glyph, tile);
+                }
+                Ok(tile_map)
+            }).wait().unwrap());
+        }
+
+        tile_map
+
+    }
+
+}
+
 #[derive(Enum)]
 enum UiComponent {
     Map,
@@ -83,12 +121,11 @@ enum UiComponent {
 
 struct Game {
     title: Asset<Image>,
-    mononoki_font_info: Asset<Image>,
-    square_font_info: Asset<Image>,
+    font_info: Vec<Asset<Image>>,
     map: game_map::GameMap,
     entities: Vec<Entity>,
     player_id: usize,
-    tileset: Asset<HashMap<char, Image>>,
+    tileset: Tileset,
     tile_size_px: Vector,
     color_scheme: color_scheme::ColorScheme,
     camera: Camera,
@@ -146,23 +183,31 @@ impl State for Game {
         }));
 
         let mononoki_font_info_style = FontStyle::new(20.0, Color::from_hex(&color_scheme.fg));
-        let mononoki_font_info = Asset::new(Font::load(FONT_MONONOKI).and_then(move |font| {
-            font.render(
-                "Mononoki font by Matthias Tellen, terms: SIL Open Font License 1.1",
-                &mononoki_font_info_style,
-                )
-        }));
-
         let square_font_info_style = FontStyle::new(12.0, Color::from_hex(&color_scheme.fg));
-        let square_font_info = Asset::new(Font::load(FONT_SQUARE).and_then(move |font| {
-            font.render(
-                "Square font by Wouter Van Oortmerssen, terms: CC BY 3.0",
-                &square_font_info_style,
-                )
-        }));
-        
-        let camera_width = 49;
-        let camera_height = 20;
+        let zodiac_square_font_info_style = FontStyle::new(12.0, Color::from_hex(&color_scheme.fg));
+        let font_info = vec! {
+            Asset::new(Font::load(FONT_MONONOKI).and_then(move |font| {
+                font.render(
+                    "Mononoki font by Matthias Tellen, terms: SIL Open Font License 1.1",
+                    &mononoki_font_info_style,
+                    )
+            })),
+            Asset::new(Font::load(FONT_SQUARE).and_then(move |font| {
+                font.render(
+                    "Square font by Wouter Van Oortmerssen, terms: CC BY 3.0",
+                    &square_font_info_style,
+                    )
+            })),
+            Asset::new(Font::load(FONT_ZODIAC_SQUARE).and_then(move |font| {
+                font.render(
+                    "Zodiac Square font by Elementalist, terms: CC0",
+                    &zodiac_square_font_info_style,
+                    )
+            })),
+        };
+
+        let camera_width = 60;
+        let camera_height = 30;
         let camera_size = Vector::new(camera_width, camera_height);
 
         let map = game_map::GameMap::new();
@@ -185,37 +230,46 @@ impl State for Game {
             max_size_z: map.max_chuncks_z * map.chunk_size,
         };
 
-        let mut entities = generate_entities();
+        let mut entities = generate_entities(
+            initial_pos_x, initial_pos_y, initial_pos_z);
         let player_id = entities.len();
         entities.push(Entity {
-            pos: Vector::new(5, 3),
+            pos: Vector::new(initial_pos_x + 33, initial_pos_y + 13),
+            depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Blue,
             hp: 3,
             max_hp: 5,
         });
 
-        let game_glyphs = "#@g.%█";
-        let tile_size_px = Vector::new(24, 24);
-        let tileset = Asset::new(Font::load(FONT_SQUARE).and_then(move |text| {
-            let tiles = text
-                .render(game_glyphs, &FontStyle::new(tile_size_px.y, Color::WHITE))
-                .expect("Could not render the font tileset.");
-            let mut tileset = HashMap::new();
-            for (index, glyph) in game_glyphs.chars().enumerate() {
-                let pos = (index as u32 * tile_size_px.x as u32, 0);
-                let tile = tiles.subimage(Rectangle::new(pos, tile_size_px));
-                tileset.insert(glyph, tile);
-            }
-            Ok(tileset)
-        }));
+        let tile_size_px = Vector::new(18, 18);
+        let glyph_map = vec! {
+            (String::from(FONT_SQUARE), 
+             String::from("#@g.%")),
+
+            (String::from(FONT_ZODIAC_SQUARE), 
+             String::from("░▒▓∷•‧≈╠╬╣╔╗╚╝╦╩═║")),
+        };
+        let tileset = Tileset::new(glyph_map, tile_size_px);
+        //let game_glyphs_extended = "░▒▓∷•‧≈╠╬╣╔╗╚╝╦╩";
+        //let tileset_extended = Asset::new(Font::load(FONT_ZODIAC_SQUARE).and_then(move |text| {
+        //    let tiles = text
+        //        .render(game_glyphs_extended, &FontStyle::new(tile_size_px.y, Color::WHITE))
+        //        .expect("Could not render the font tileset.");
+        //    let mut tileset = HashMap::new();
+        //    for (index, glyph) in game_glyphs_extended.chars().enumerate() {
+        //        let pos = (index as u32 * tile_size_px.x as u32, 0);
+        //        let tile = tiles.subimage(Rectangle::new(pos, tile_size_px));
+        //        tileset.insert(glyph, tile);
+        //    }
+        //    Ok(tileset)
+        //}));
 
         let input_timer = Instant::now();
 
         Ok(Self {
             title,
-            mononoki_font_info,
-            square_font_info,
+            font_info,
             map,
             entities,
             player_id,
@@ -400,78 +454,83 @@ impl Game {
     fn draw_map(&mut self, window: &mut Window) -> Result<()> {
         let tile_size_px = self.tile_size_px;
 
-        let (tileset, map, entities) = (&mut self.tileset, &mut self.map, &self.entities);
+        let (tileset, map, entities) = (
+            &mut self.tileset.tile_map, 
+            &mut self.map, 
+            &self.entities
+        );
+        
         let (camera_x, camera_y, camera_z) = (
             self.camera.position.x, 
             self.camera.position.y, 
             self.camera.position.z
         );
+
         let camera_size_x = self.camera.viewport_size.x;
         let camera_size_y = self.camera.viewport_size.y;
+        
         let color_scheme = &self.color_scheme;
 
-        let offset_px = Vector::new(50, 120);
+        let offset_px = Vector::new(50, 100);
         
         let origin_offset = Vector::new(-(camera_x as i32), -(camera_y as i32));
         //println!("camera_pos: {:?}", self.camera_pos);
 
-        tileset.execute(|tileset| {
-            for x in camera_x..camera_x + camera_size_x as u32 {
-                for y in camera_y..camera_y + camera_size_y as u32 {
-                    //println!("camera_z: {:?}", camera_z);
-                    let tile = map.get_tile(x, y, camera_z);
-                        if let Some(image) = tileset.get(&tile.glyph) {
-                            let pos_px = tile.pos
-                                .translate(origin_offset)
-                                .times(tile_size_px);
-                            //println!("x: {:?}, y: {:?}, z: {:?}", x, y, camera_z);
-                            //println!("{:?}", tile);
-                            let tile_color = Color::from_hex(color_scheme.get_color_code(&tile.color));
-                            window.draw(
-                                &Rectangle::new(offset_px + pos_px, image.area().size()),
-                                Blended(&image, tile_color),
-                            );
-                        }
+        for x in camera_x..camera_x + camera_size_x as u32 {
+            for y in camera_y..camera_y + camera_size_y as u32 {
+                //println!("camera_z: {:?}", camera_z);
+                let tile = map.get_tile(x, y, camera_z);
+                    if let Some(image) = tileset.get(&tile.glyph) {
+                        let pos_px = tile.pos
+                            .translate(origin_offset)
+                            .times(tile_size_px);
+                        //println!("x: {:?}, y: {:?}, z: {:?}", x, y, camera_z);
+                        //println!("{:?}", tile);
+                        let tile_color = Color::from_hex(color_scheme.get_color_code(&tile.color));
+                        window.draw(
+                            &Rectangle::new(offset_px + pos_px, image.area().size()),
+                            Blended(&image, tile_color),
+                        );
                     }
-            }
+                }
+        }
 
-            for entity in entities.iter() {
+        for entity in entities.iter() {
+            if entity.depth == camera_z 
+               && (entity.pos.x as u32) >= camera_x 
+               && (entity.pos.x as u32) < (camera_x + camera_size_x as u32)
+               && (entity.pos.y as u32) >= camera_y
+               && (entity.pos.y as u32) < (camera_y + camera_size_y as u32) 
+            {
                 if let Some(image) = tileset.get(&entity.glyph) {
-                    let pos_px = offset_px + entity.pos.times(tile_size_px);
+                    let pos_px = entity.pos
+                        .translate(origin_offset)
+                        .times(tile_size_px);
                     window.draw(
-                        &Rectangle::new(pos_px, image.area().size()),
+                        &Rectangle::new(offset_px + pos_px, image.area().size()),
                         Blended(&image, Color::from_hex(color_scheme.get_color_code(&entity.color))),
                     );
                 }
             }
-            Ok(())
-        })?;
-        
+        }
 
         Ok(())
     }
 
     fn draw_credits(&mut self, window: &mut Window) -> Result<()> {
-        
-        self.mononoki_font_info.execute(|image| {
-            window.draw(
-                &image
-                    .area()
-                    .translate((2, window.screen_size().y as i32 - 60)),
-                Img(&image),
-            );
-            Ok(())
-        })?;
-
-        self.square_font_info.execute(|image| {
-            window.draw(
-                &image
-                    .area()
-                    .translate((2, window.screen_size().y as i32 - 30)),
-                Img(&image),
-            );
-            Ok(())
-        })?;
+        let mut y_offset = 60;
+        for fi in self.font_info.iter_mut() {
+            fi.execute(|image| {
+                window.draw(
+                    &image
+                        .area()
+                        .translate((2, window.screen_size().y as i32 - y_offset)),
+                    Img(&image),
+                );
+                Ok(())
+            })?;
+            y_offset -= 20;
+        }
 
         Ok(())
     }
@@ -503,15 +562,6 @@ Camera Pos: (x: {:?} y: {:?} z: {:?})",
             Ok(())
         })?;
 
-        // self.square_font_info.execute(|image| {
-        //     window.draw(
-        //         &image
-        //             .area()
-        //             .translate((2, window.screen_size().y as i32 - 30)),
-        //         Img(&image),
-        //     );
-        //     Ok(())
-        // })?;
         Ok(())
     }
 
@@ -529,39 +579,103 @@ fn main() {
 #[derive(Clone, Debug, PartialEq)]
 struct Entity {
     pos: Vector,
+    depth: u32,
     glyph: char,
     color: color_scheme::ColorName,
     hp: i32,
     max_hp: i32,
 }
 
-fn generate_entities() -> Vec<Entity> {
+fn generate_entities(
+    initial_pos_x: u32, initial_pos_y: u32, initial_pos_z: u32) 
+    -> Vec<Entity> {
     vec![
         Entity {
-            pos: Vector::new(9, 6),
-            glyph: 'g',
+            pos: Vector::new(initial_pos_x + 31, initial_pos_y + 12),
+            depth: initial_pos_z,
+            glyph: '@',
             color: color_scheme::ColorName::Red,
             hp: 1,
             max_hp: 1,
         },
         Entity {
-            pos: Vector::new(2, 4),
-            glyph: 'g',
-            color: color_scheme::ColorName::Red,
+            pos: Vector::new(initial_pos_x + 31, initial_pos_y + 13),
+            depth: initial_pos_z,
+            glyph: '@',
+            color: color_scheme::ColorName::Green,
             hp: 1,
             max_hp: 1,
         },
         Entity {
-            pos: Vector::new(7, 5),
-            glyph: '%',
+            pos: Vector::new(initial_pos_x + 31, initial_pos_y + 14),
+            depth: initial_pos_z,
+            glyph: '@',
+            color: color_scheme::ColorName::Orange,
+            hp: 0,
+            max_hp: 0,
+        },
+        Entity {
+            pos: Vector::new(initial_pos_x + 32, initial_pos_y + 12),
+            depth: initial_pos_z,
+            glyph: '@',
             color: color_scheme::ColorName::Purple,
             hp: 0,
             max_hp: 0,
         },
         Entity {
-            pos: Vector::new(4, 8),
-            glyph: '%',
-            color: color_scheme::ColorName::Purple,
+            pos: Vector::new(initial_pos_x + 32, initial_pos_y + 13),
+            depth: initial_pos_z,
+            glyph: '@',
+            color: color_scheme::ColorName::Yellow,
+            hp: 0,
+            max_hp: 0,
+        },
+        Entity {
+            pos: Vector::new(initial_pos_x + 32, initial_pos_y + 14),
+            depth: initial_pos_z,
+            glyph: '@',
+            color: color_scheme::ColorName::Aqua,
+            hp: 0,
+            max_hp: 0,
+        },
+        Entity {
+            pos: Vector::new(initial_pos_x + 33, initial_pos_y + 12),
+            depth: initial_pos_z,
+            glyph: '@',
+            color: color_scheme::ColorName::Gray,
+            hp: 0,
+            max_hp: 0,
+        },
+        // ░▒▓∷•‧≈╠╬╣╔╗╚╝╦╩═║
+        Entity {
+            pos: Vector::new(initial_pos_x + 34, initial_pos_y + 19),
+            depth: initial_pos_z,
+            glyph: '║',
+            color: color_scheme::ColorName::Yellow,
+            hp: 0,
+            max_hp: 0,
+        },
+        Entity {
+            pos: Vector::new(initial_pos_x + 34, initial_pos_y + 18),
+            depth: initial_pos_z,
+            glyph: '║',
+            color: color_scheme::ColorName::Yellow,
+            hp: 0,
+            max_hp: 0,
+        },
+        Entity {
+            pos: Vector::new(initial_pos_x + 34, initial_pos_y + 17),
+            depth: initial_pos_z,
+            glyph: '╔',
+            color: color_scheme::ColorName::Yellow,
+            hp: 0,
+            max_hp: 0,
+        },
+        Entity {
+            pos: Vector::new(initial_pos_x + 35, initial_pos_y + 17),
+            depth: initial_pos_z,
+            glyph: '═',
+            color: color_scheme::ColorName::Yellow,
             hp: 0,
             max_hp: 0,
         },
