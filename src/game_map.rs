@@ -18,11 +18,11 @@ pub struct GameMap {
 impl GameMap {
     pub fn new() -> GameMap {
         let chunk_size: u32 = 64;
-        let planet_diameter: u32 = 8000000;
+        let planet_circumference: u32 = 20000000;
         let planet_crust_thickness: u32 = 32000;
         let surface_level: u32 = 1000;
-        let max_chuncks_x: u32 = planet_diameter / chunk_size;
-        let max_chuncks_y: u32 = planet_diameter / chunk_size;
+        let max_chuncks_x: u32 = planet_circumference / chunk_size;
+        let max_chuncks_y: u32 = planet_circumference / chunk_size;
         let max_chuncks_z: u32 = planet_crust_thickness / chunk_size;
         GameMap {
             map: HashMap::with_capacity(chunk_size as usize),

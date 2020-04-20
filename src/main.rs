@@ -234,7 +234,7 @@ impl State for Game {
             initial_pos_x, initial_pos_y, initial_pos_z);
         let player_id = entities.len();
         entities.push(Entity {
-            pos: Vector::new(initial_pos_x + 33, initial_pos_y + 13),
+            pos: Vector::new(initial_pos_x + 29, initial_pos_y + 23),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Blue,
@@ -251,20 +251,7 @@ impl State for Game {
              String::from("░▒▓∷•‧≈╠╬╣╔╗╚╝╦╩═║")),
         };
         let tileset = Tileset::new(glyph_map, tile_size_px);
-        //let game_glyphs_extended = "░▒▓∷•‧≈╠╬╣╔╗╚╝╦╩";
-        //let tileset_extended = Asset::new(Font::load(FONT_ZODIAC_SQUARE).and_then(move |text| {
-        //    let tiles = text
-        //        .render(game_glyphs_extended, &FontStyle::new(tile_size_px.y, Color::WHITE))
-        //        .expect("Could not render the font tileset.");
-        //    let mut tileset = HashMap::new();
-        //    for (index, glyph) in game_glyphs_extended.chars().enumerate() {
-        //        let pos = (index as u32 * tile_size_px.x as u32, 0);
-        //        let tile = tiles.subimage(Rectangle::new(pos, tile_size_px));
-        //        tileset.insert(glyph, tile);
-        //    }
-        //    Ok(tileset)
-        //}));
-
+        
         let input_timer = Instant::now();
 
         Ok(Self {
@@ -591,7 +578,7 @@ fn generate_entities(
     -> Vec<Entity> {
     vec![
         Entity {
-            pos: Vector::new(initial_pos_x + 31, initial_pos_y + 12),
+            pos: Vector::new(initial_pos_x + 27, initial_pos_y + 22),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Red,
@@ -599,7 +586,7 @@ fn generate_entities(
             max_hp: 1,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 31, initial_pos_y + 13),
+            pos: Vector::new(initial_pos_x + 27, initial_pos_y + 23),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Green,
@@ -607,7 +594,7 @@ fn generate_entities(
             max_hp: 1,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 31, initial_pos_y + 14),
+            pos: Vector::new(initial_pos_x + 27, initial_pos_y + 24),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Orange,
@@ -615,7 +602,7 @@ fn generate_entities(
             max_hp: 0,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 32, initial_pos_y + 12),
+            pos: Vector::new(initial_pos_x + 28, initial_pos_y + 22),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Purple,
@@ -623,7 +610,7 @@ fn generate_entities(
             max_hp: 0,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 32, initial_pos_y + 13),
+            pos: Vector::new(initial_pos_x + 28, initial_pos_y + 23),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Yellow,
@@ -631,7 +618,7 @@ fn generate_entities(
             max_hp: 0,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 32, initial_pos_y + 14),
+            pos: Vector::new(initial_pos_x + 28, initial_pos_y + 24),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Aqua,
@@ -639,7 +626,7 @@ fn generate_entities(
             max_hp: 0,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 33, initial_pos_y + 12),
+            pos: Vector::new(initial_pos_x + 29, initial_pos_y + 22),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Gray,
@@ -648,7 +635,7 @@ fn generate_entities(
         },
         // ░▒▓∷•‧≈╠╬╣╔╗╚╝╦╩═║
         Entity {
-            pos: Vector::new(initial_pos_x + 34, initial_pos_y + 19),
+            pos: Vector::new(initial_pos_x + 25, initial_pos_y + 19),
             depth: initial_pos_z,
             glyph: '║',
             color: color_scheme::ColorName::Yellow,
@@ -656,7 +643,7 @@ fn generate_entities(
             max_hp: 0,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 34, initial_pos_y + 18),
+            pos: Vector::new(initial_pos_x + 25, initial_pos_y + 18),
             depth: initial_pos_z,
             glyph: '║',
             color: color_scheme::ColorName::Yellow,
@@ -664,7 +651,7 @@ fn generate_entities(
             max_hp: 0,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 34, initial_pos_y + 17),
+            pos: Vector::new(initial_pos_x + 25, initial_pos_y + 17),
             depth: initial_pos_z,
             glyph: '╔',
             color: color_scheme::ColorName::Yellow,
@@ -672,7 +659,7 @@ fn generate_entities(
             max_hp: 0,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 35, initial_pos_y + 17),
+            pos: Vector::new(initial_pos_x + 26, initial_pos_y + 17),
             depth: initial_pos_z,
             glyph: '═',
             color: color_scheme::ColorName::Yellow,
