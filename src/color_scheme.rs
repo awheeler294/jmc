@@ -39,30 +39,56 @@ pub fn get_stone_color(val: &f64, min: &f64, max: &f64) -> ColorName {
     let min = *min;
     let max = *max;
 
-    let step = (max - min) / 8.0;
+    let step = (max - min) / 7.0;
     if (min..(min+step)).contains(&val) {
         ColorName::Void
     }
     else if (min+step..min+(2.0*step)).contains(&val) {
-        ColorName::Stone0
-    }
-    else if (min+(2.0*step)..min+(3.0*step)).contains(&val) {
         ColorName::Stone1
     }
-    else if (min+(3.0*step)..min+(4.0*step)).contains(&val) {
+    else if (min+(2.0*step)..min+(3.0*step)).contains(&val) {
         ColorName::Stone2
+    }
+    else if (min+(3.0*step)..min+(4.0*step)).contains(&val) {
+        ColorName::Stone3
+    }
+    else if (min+(4.0*step)..min+(5.0*step)).contains(&val) {
+        ColorName::Stone4
+    }
+    //else if (min+(5.0*step)..min+(6.0*step)).contains(&val) {
+    //    ColorName::Stone4
+    //}
+    else if (min+(5.0*step)..min+(6.0*step)).contains(&val) {
+        ColorName::Stone5
+    }
+    else {
+        ColorName::Stone6
+    }
+    
+}
+
+pub fn get_floor_color(val: &f64, min: &f64, max: &f64) -> ColorName {
+    let min = *min;
+    let max = *max;
+
+    let step = (max - min) / 8.0;
+    if (min..(min+step)).contains(&val) {
+        ColorName::Stone6
+    }
+    else if (min+(2.0*step)..min+(3.0*step)).contains(&val) {
+        ColorName::Stone5
+    }
+    else if (min+(3.0*step)..min+(4.0*step)).contains(&val) {
+        ColorName::Stone4
     }
     else if (min+(4.0*step)..min+(5.0*step)).contains(&val) {
         ColorName::Stone3
     }
     else if (min+(5.0*step)..min+(6.0*step)).contains(&val) {
-        ColorName::Stone4
-    }
-    else if (min+(6.0*step)..min+(7.0*step)).contains(&val) {
-        ColorName::Stone5
+        ColorName::Stone2
     }
     else {
-        ColorName::Stone6
+        ColorName::Void
     }
     
 }

@@ -234,10 +234,10 @@ impl State for Game {
             initial_pos_x, initial_pos_y, initial_pos_z);
         let player_id = entities.len();
         entities.push(Entity {
-            pos: Vector::new(initial_pos_x + 29, initial_pos_y + 23),
+            pos: Vector::new(initial_pos_x + 29, initial_pos_y + 20),
             depth: initial_pos_z,
-            glyph: '@',
-            color: color_scheme::ColorName::Blue,
+            glyph: '0',
+            color: color_scheme::ColorName::LightOrange,
             hp: 3,
             max_hp: 5,
         });
@@ -245,10 +245,10 @@ impl State for Game {
         let tile_size_px = Vector::new(18, 18);
         let glyph_map = vec! {
             (String::from(FONT_SQUARE), 
-             String::from("#@g.%")),
+             String::from("#@g.%08*")),
 
             (String::from(FONT_ZODIAC_SQUARE), 
-             String::from("░▒▓∷•‧≈╠╬╣╔╗╚╝╦╩═║")),
+             String::from("™↺∆░▒▓∷•‧≈╠╬╣╔╗╚╝╦╩═║")),
         };
         let tileset = Tileset::new(glyph_map, tile_size_px);
         
@@ -273,7 +273,7 @@ impl State for Game {
     fn update(&mut self, window: &mut Window) -> Result<()> {
         use ButtonState::*;
 
-        if self.input_timer.elapsed() >= Duration::from_millis(100) {
+        if self.input_timer.elapsed() >= Duration::from_millis(50) {
             // camera controls
             let camera = &mut self.camera;
 
@@ -523,11 +523,21 @@ impl Game {
     }
 
     fn draw_debug(&mut self, window: &mut Window) -> Result<()> {
-        let mononoki_font_info_style = FontStyle::new(20.0, Color::from_hex(&self.color_scheme.fg));
-        let debug_string = format!("Player Pos: (x: {:?} y: {:?})\n
+        let mononoki_font_info_style = FontStyle::new(
+            20.0, Color::from_hex(&self.color_scheme.fg));
+
+        let player_id = self.player_id;
+        let player = &self.entities[player_id];
+        let tile = self.map.get_tile(
+            player.pos.x as u32, player.pos.y as u32, self.camera.position.z);
+
+        let debug_string = format!("Player Pos: (x: {:?} y: {:?})  Tile: (Color: {:?} glyph: {:?} val: {:?})\n
 Camera Pos: (x: {:?} y: {:?} z: {:?})",
-                                   self.entities[self.player_id].pos.x,
-                                   self.entities[self.player_id].pos.y,
+                                   player.pos.x,
+                                   player.pos.y,
+                                   tile.color,
+                                   tile.glyph,
+                                   tile.val,
                                    self.camera.position.x,
                                    self.camera.position.y,
                                    self.camera.position.z,
@@ -578,7 +588,7 @@ fn generate_entities(
     -> Vec<Entity> {
     vec![
         Entity {
-            pos: Vector::new(initial_pos_x + 27, initial_pos_y + 22),
+            pos: Vector::new(initial_pos_x + 27, initial_pos_y + 18),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Red,
@@ -586,7 +596,7 @@ fn generate_entities(
             max_hp: 1,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 27, initial_pos_y + 23),
+            pos: Vector::new(initial_pos_x + 27, initial_pos_y + 19),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Green,
@@ -594,7 +604,7 @@ fn generate_entities(
             max_hp: 1,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 27, initial_pos_y + 24),
+            pos: Vector::new(initial_pos_x + 27, initial_pos_y + 20),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Orange,
@@ -602,7 +612,7 @@ fn generate_entities(
             max_hp: 0,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 28, initial_pos_y + 22),
+            pos: Vector::new(initial_pos_x + 28, initial_pos_y + 18),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Purple,
@@ -610,7 +620,7 @@ fn generate_entities(
             max_hp: 0,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 28, initial_pos_y + 23),
+            pos: Vector::new(initial_pos_x + 28, initial_pos_y + 19),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Yellow,
@@ -618,7 +628,7 @@ fn generate_entities(
             max_hp: 0,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 28, initial_pos_y + 24),
+            pos: Vector::new(initial_pos_x + 28, initial_pos_y + 20),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Aqua,
@@ -626,7 +636,7 @@ fn generate_entities(
             max_hp: 0,
         },
         Entity {
-            pos: Vector::new(initial_pos_x + 29, initial_pos_y + 22),
+            pos: Vector::new(initial_pos_x + 29, initial_pos_y + 18),
             depth: initial_pos_z,
             glyph: '@',
             color: color_scheme::ColorName::Gray,
@@ -666,6 +676,14 @@ fn generate_entities(
             hp: 0,
             max_hp: 0,
         },
+        Entity {
+            pos: Vector::new(initial_pos_x + 29, initial_pos_y + 19),
+            depth: initial_pos_z,
+            glyph: '@',
+            color: color_scheme::ColorName::Blue,
+            hp: 3,
+            max_hp: 5,
+        }
     ]
 }
 
