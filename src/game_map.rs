@@ -12,18 +12,23 @@ pub struct GameMap {
     pub max_chuncks_y: u32,
     pub max_chuncks_z: u32,
     pub surface_level: u32,
+    pub level_thickness: u32,
     pub random_seed: u32,
 }
 
 impl GameMap {
     pub fn new() -> GameMap {
-        let chunk_size: u32 = 64;
+        
+        //In meters
         let planet_circumference: u32 = 20000000;
         let planet_crust_thickness: u32 = 32000;
         let surface_level: u32 = 1000;
+        let level_thickness: u32 = 30;
+        
+        let chunk_size: u32 = 64;
         let max_chuncks_x: u32 = planet_circumference / chunk_size;
         let max_chuncks_y: u32 = planet_circumference / chunk_size;
-        let max_chuncks_z: u32 = planet_crust_thickness / chunk_size;
+        let max_chuncks_z: u32 = planet_crust_thickness /level_thickness / chunk_size;
         //let mut rng = rand_pcg::Pcg64Mcg::seed_from_u64(10);
         GameMap {
             map: HashMap::with_capacity(chunk_size as usize),
@@ -32,6 +37,7 @@ impl GameMap {
             max_chuncks_y,
             max_chuncks_z,
             surface_level,
+            level_thickness,
             random_seed: oorandom::Rand32::new(10).rand_u32(),
         }
     }
@@ -40,46 +46,47 @@ impl GameMap {
         //println!("get_tile x: {:?}, y: {:?}, z: {:?}", x, y, z);
         //println!("map.keys: {:?}", self.map);
 
-        let chunk_size = self.chunk_size as usize;
-        let (x_min, x_max, y_min, y_max, z_min, z_max) = GameMap::get_chunck_boundries(x, y, z, chunk_size as u32);
+        let chunk_size = self.chunk_size;
+        let chunk_size_u = self.chunk_size as usize;
+        let (x_min, x_max, y_min, y_max, z_min, z_max) = GameMap::get_chunck_boundries(x, y, z, chunk_size);
         //println!("x_min: {:?}, x_max: {:?}, y_min: {:?}, y_max: {:?}, z_min: {:?}, z_max: {:?}", x_min, x_max, y_min, y_max, z_min, z_max);
         let calculate_center = |min, size| {min + size/2};
-        let center_x = calculate_center(x_min, chunk_size as u32);
-        let center_y = calculate_center(y_min, chunk_size as u32);
-        let center_z = calculate_center(z_min, chunk_size as u32);
+        let center_x = calculate_center(x_min, chunk_size);
+        let center_y = calculate_center(y_min, chunk_size);
+        let center_z = calculate_center(z_min, chunk_size);
 
         //println!("center x: {:?}, y: {:?}, z: {:?}", center_x,center_y,center_z);
         //println!("map.keys: {:?}", self.map.keys());
         if !self.map.contains_key(&center_x) {
-            self.map.insert(center_x, HashMap::with_capacity(chunk_size));
+            self.map.insert(center_x, HashMap::with_capacity(chunk_size_u));
         }
         let x_map = self.map.get_mut(&center_x).unwrap();
         //println!("x_map.len: {:?}", x_map.len());
 
         if !x_map.contains_key(&center_y) {
-            x_map.insert(center_y, HashMap::with_capacity(chunk_size));
+            x_map.insert(center_y, HashMap::with_capacity(chunk_size_u));
         }
         let y_map = x_map.get_mut(&center_y).unwrap();
         //println!("y_map.len: {:?}", y_map.len());
  
         if !y_map.contains_key(&center_z) {
             y_map.insert(center_z, GameMap::generate_map_chunk(
-                    HashMap::with_capacity(chunk_size),
+                    HashMap::with_capacity(chunk_size_u),
                     x_min, x_max, 
                     y_min, y_max, 
                     z_min, z_max,
-                    &chunk_size, &self.random_seed)
+                    &chunk_size, &self.level_thickness, 
+                    &self.random_seed)
                 );
         }
         let chunk = &y_map.get(&center_z).unwrap();
         //println!("z_map.len: {:?}", z_map.len());
         
-        let chunk_size_32 = self.chunk_size as u32;
-        let chunk_x = x % chunk_size_32;
-        let chunk_y = y % chunk_size_32;
-        let chunk_z = z % chunk_size_32;
+        let chunk_x = x % chunk_size;
+        let chunk_y = y % chunk_size;
+        let chunk_z = z % chunk_size;
         let chunk_plane = &chunk.get(&chunk_z).unwrap();
-        let i = (chunk_x + chunk_y * chunk_size_32) as usize;
+        let i = (chunk_x + chunk_y * chunk_size) as usize;
         //println!("i: {:?}", i);
         
         //println!("get_tile returning tile: {:?}", map_plane[i]);
@@ -90,18 +97,9 @@ impl GameMap {
                               x_min: u32, x_max: u32, 
                               y_min: u32, y_max: u32, 
                               z_min: u32, z_max: u32,
-                              &chunk_size: &usize, &random_seed: &u32,
+                              &chunk_size: &u32, 
+                              &level_thickness: &u32, &random_seed: &u32,
                               ) -> HashMap<u32, Vec<Tile>>{
-        // Generate the chunk that x, y, z is located in
-        // Get a block of 3d ridge noise, custom settings, 32x32x32 unscaled
-        //let noise = NoiseBuilder::ridge_3d(width, height, depth)
-        //let noise = NoiseBuilder::ridge_3d(width, height, depth)
-            //.generate_scaled(-1.0, 1.0);
-            //.with_freq(0.05)
-            //.with_octaves(5)
-            //.with_gain(2.0)
-            //.with_seed(1337)
-            //.with_lacunarity(0.5)
 
         //println!("chunk_size: {:?}", chunk_size);
         //println!("x_min: {:?}", x_min);
@@ -110,21 +108,19 @@ impl GameMap {
         //println!("y_max: {:?}", y_max);
         //println!("z_min: {:?}", z_min);
         //println!("z_max: {:?}", z_max);
-        
+        let noise_gen = ScalePoint::new(Billow::new()
+            .set_seed(random_seed)
+            .set_frequency(0.125)
+            .set_persistence(0.35)
+            ).set_scale(0.1);
         for z in (z_min..z_max).rev() {
-            let mut z_map = Vec::with_capacity(chunk_size * chunk_size);
-            
-            let level_seed = oorandom::Rand32::new(
-                (random_seed + z).into()).rand_u32();
-            let noise_gen = ScalePoint::new(Billow::new()
-                                        .set_seed(level_seed)
-                                        .set_frequency(0.125)
-                                        .set_persistence(0.35)
-                                        ).set_scale(0.1);
+            let mut z_map = Vec::with_capacity((chunk_size * chunk_size) as usize);
+            let z_depth = z * level_thickness;
             for y in y_min..y_max {
                 for x in x_min..x_max {
-                    //let val = noise.get((x % width) + (y % height) + (depth % depth)).unwrap();
-                    let val = noise_gen.get([x as f64, y as f64, z as f64]).abs();
+                    let val = noise_gen.get(
+                        [x as f64, y as f64, z_depth as f64])
+                        .abs();
                     //println!("{}", val);
                     //println!("x, y, z: {:?}, {:?}, {:?}", x, y, z);
                     
@@ -148,7 +144,7 @@ impl GameMap {
                     z_map.push(tile);
                 }
             }
-            map.insert(z % chunk_size as u32, z_map);
+            map.insert(z % chunk_size, z_map);
         }
         map
     }

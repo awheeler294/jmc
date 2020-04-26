@@ -273,7 +273,7 @@ impl State for Game {
     fn update(&mut self, window: &mut Window) -> Result<()> {
         use ButtonState::*;
 
-        if self.input_timer.elapsed() >= Duration::from_millis(50) {
+        if self.input_timer.elapsed() >= Duration::from_millis(100) {
             // camera controls
             let camera = &mut self.camera;
 
@@ -295,11 +295,11 @@ impl State for Game {
             }
             if window.keyboard()[Key::RBracket].is_down() {
                 self.input_timer = Instant::now();
-                camera.elevate();
+                camera.lower();
             }
             if window.keyboard()[Key::LBracket].is_down() {
                 self.input_timer = Instant::now();
-                camera.lower();
+                camera.elevate();
             }
             // ctrl + section
             if window.keyboard()[Key::LControl].is_down() || 
@@ -337,7 +337,7 @@ impl State for Game {
                     self.input_timer = Instant::now();
                     camera.go_to(camera.position.x, 
                                  camera.position.y, 
-                                 0);
+                                 camera.max_size_z);
                 }
                 // ctrl + lbracket
                 if window.keyboard()[Key::LBracket].is_down() {
@@ -345,7 +345,7 @@ impl State for Game {
                     camera.go_to(
                         camera.position.x, 
                         camera.position.y, 
-                        camera.max_size_z);
+                        0);
                 }
             }
         

@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 # More features: "collisions", "complex_shapes", "immi_ui", "sounds", gamepads
 quicksilver = { version = "0.3.22", default-features = false, features = ["fonts", "saving"]}
-noise = { version = "0.6.0" }
-#simdnoise = "3.1.4"
+noise = "0.6.0" 
 enum-map = "0.6.2"
 oorandom = "11.1.0"
+
