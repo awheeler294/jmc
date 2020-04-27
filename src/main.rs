@@ -1,5 +1,6 @@
 use enum_map::{enum_map, Enum, EnumMap};
 use quicksilver::prelude::*;
+use quicksilver::graphics::View;
 
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -24,6 +25,8 @@ struct Camera {
     max_size_x: u32,
     max_size_y: u32,
     max_size_z: u32,
+    zoom_factor: f32,
+    zoom_interval: f32,
 }
 
 impl Camera {
@@ -71,6 +74,14 @@ impl Camera {
            self.position.y = y;
            self.position.z = z;
         }
+    }
+    
+    fn zoom_in(&mut self) {
+        self.zoom_factor += self.zoom_interval;
+    }
+
+    fn zoom_out(&mut self) {
+        self.zoom_factor -= self.zoom_interval;
     }
 }
 
@@ -179,7 +190,7 @@ impl State for Game {
 
         let title_style = FontStyle::new(72.0, Color::from_hex(&color_scheme.fg));
         let title = Asset::new(Font::load(FONT_MONONOKI).and_then(move |font| {
-            font.render("Janus Mining Colony", &title_style)
+            font.render("Janus 7 Mining Colony", &title_style)
         }));
 
         let mononoki_font_info_style = FontStyle::new(20.0, Color::from_hex(&color_scheme.fg));
@@ -225,6 +236,8 @@ impl State for Game {
         let camera = Camera {
             position: camera_pos,
             viewport_size: camera_size,
+            zoom_factor: 1.0,
+            zoom_interval: 0.1,
             max_size_x: map.max_chuncks_x * map.chunk_size - camera_size.x as u32,
             max_size_y: map.max_chuncks_y * map.chunk_size - camera_size.y as u32,
             max_size_z: map.max_chuncks_z * map.chunk_size,
@@ -293,13 +306,21 @@ impl State for Game {
                 self.input_timer = Instant::now();
                 camera.move_down();
             }
-            if window.keyboard()[Key::RBracket].is_down() {
+            if window.keyboard()[Key::Period].is_down() {
                 self.input_timer = Instant::now();
                 camera.lower();
             }
-            if window.keyboard()[Key::LBracket].is_down() {
+            if window.keyboard()[Key::Comma].is_down() {
                 self.input_timer = Instant::now();
                 camera.elevate();
+            }
+            if window.keyboard()[Key::RBracket].is_down() {
+                self.input_timer = Instant::now();
+                camera.zoom_in();
+            }
+            if window.keyboard()[Key::LBracket].is_down() {
+                self.input_timer = Instant::now();
+                camera.zoom_out();
             }
             // ctrl + section
             if window.keyboard()[Key::LControl].is_down() || 
@@ -396,6 +417,10 @@ impl State for Game {
 
     /// Draw stuff on the screen
     fn draw(&mut self, window: &mut Window) -> Result<()> {
+        let window_view = View::new(
+                Rectangle::new(Vector::new(0.0, 0.0), window.screen_size()
+        ));
+        window.set_view(window_view);
         window.clear(Color::from_hex(&self.color_scheme.void))?;
 
         if self.ui_components[UiComponent::Title] {
@@ -439,7 +464,6 @@ impl Game {
     }
 
     fn draw_map(&mut self, window: &mut Window) -> Result<()> {
-        let tile_size_px = self.tile_size_px;
 
         let (tileset, map, entities) = (
             &mut self.tileset.tile_map, 
@@ -447,14 +471,18 @@ impl Game {
             &self.entities
         );
         
+        let camera = &self.camera;
+        
+        let tile_size_px = self.tile_size_px * camera.zoom_factor;
+
         let (camera_x, camera_y, camera_z) = (
-            self.camera.position.x, 
-            self.camera.position.y, 
-            self.camera.position.z
+            camera.position.x, 
+            camera.position.y, 
+            camera.position.z
         );
 
-        let camera_size_x = self.camera.viewport_size.x;
-        let camera_size_y = self.camera.viewport_size.y;
+        let camera_size_x = camera.viewport_size.x / camera.zoom_factor;
+        let camera_size_y = camera.viewport_size.y / camera.zoom_factor;
         
         let color_scheme = &self.color_scheme;
 
@@ -473,10 +501,15 @@ impl Game {
                             .times(tile_size_px);
                         //println!("x: {:?}, y: {:?}, z: {:?}", x, y, camera_z);
                         //println!("{:?}", tile);
-                        let tile_color = Color::from_hex(color_scheme.get_color_code(&tile.color));
-                        window.draw(
-                            &Rectangle::new(offset_px + pos_px, image.area().size()),
+                        let tile_color = Color::from_hex(
+                            color_scheme.get_color_code(&tile.color));
+                        window.draw_ex(
+                            &Rectangle::new(
+                                offset_px + pos_px, image.area().size()),
                             Blended(&image, tile_color),
+                            Transform::scale(
+                                (camera.zoom_factor, camera.zoom_factor)),
+                            0 // Z value
                         );
                     }
                 }
@@ -493,9 +526,16 @@ impl Game {
                     let pos_px = entity.pos
                         .translate(origin_offset)
                         .times(tile_size_px);
-                    window.draw(
-                        &Rectangle::new(offset_px + pos_px, image.area().size()),
-                        Blended(&image, Color::from_hex(color_scheme.get_color_code(&entity.color))),
+                    let entity_color = Color::from_hex(
+                        color_scheme.get_color_code(&entity.color));
+                    window.draw_ex(
+                        &Rectangle::new(
+                            offset_px + pos_px, image.area().size()),
+                        Blended(&image, entity_color),
+                        Transform::scale(
+                                (camera.zoom_factor, camera.zoom_factor)),
+                        1 // Z value
+
                     );
                 }
             }
@@ -532,7 +572,7 @@ impl Game {
             player.pos.x as u32, player.pos.y as u32, self.camera.position.z);
 
         let debug_string = format!("Player Pos: (x: {:?} y: {:?})  Tile: (Color: {:?} glyph: {:?} val: {:?})\n
-Camera Pos: (x: {:?} y: {:?} z: {:?})",
+Camera Pos: (x: {:?} y: {:?} z: {:?}), Zoom Factor: {:?}",
                                    player.pos.x,
                                    player.pos.y,
                                    tile.color,
@@ -541,6 +581,7 @@ Camera Pos: (x: {:?} y: {:?} z: {:?})",
                                    self.camera.position.x,
                                    self.camera.position.y,
                                    self.camera.position.z,
+                                   self.camera.zoom_factor,
                                   );
         let mut debug_info = Asset::new(Font::load(FONT_MONONOKI).and_then(move |font| {
             font.render(
@@ -570,7 +611,7 @@ fn main() {
          scale: quicksilver::graphics::ImageScaleStrategy::Blur,
         ..Default::default()
     };
-    run::<Game>("Janus Mining Colony", Vector::new(1280, 720), settings);
+    run::<Game>("Janus 7 Mining Colony", Vector::new(1280, 720), settings);
 }
 
 #[derive(Clone, Debug, PartialEq)]
