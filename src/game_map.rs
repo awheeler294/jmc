@@ -110,8 +110,8 @@ impl GameMap {
         //println!("z_max: {:?}", z_max);
         let noise_gen = ScalePoint::new(Billow::new()
             .set_seed(random_seed)
-            .set_frequency(0.125)
-            .set_persistence(0.35)
+            .set_frequency(0.0125)
+            .set_persistence(0.035)
             ).set_scale(0.1);
         for z in (z_min..z_max).rev() {
             let mut z_map = Vec::with_capacity((chunk_size * chunk_size) as usize);
