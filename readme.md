@@ -8,8 +8,11 @@ Currently features a very basic procedural terrain generator and scrollable, zoo
 
 ### Controls
 Up, Down, Left, Right: Scroll Camera
+
 W, A, S, D: Move Player
-[, ]: zoom out, in
+
+[ ]: zoom out, in
+
 comma, period: Move camera up, down one level
 
 ### Roadmap
