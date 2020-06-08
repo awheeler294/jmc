@@ -45,13 +45,13 @@ impl Tileset {
                 let tiles = font
                     .render(glyphs.as_str(), &FontStyle::new(tile_size_px.y, Color::WHITE))
                     .expect("could not render tileset.");
-                let mut tile_map = HashMap::new();
+                let mut _tile_map = HashMap::new();
                 for (index, glyph) in glyphs.chars().enumerate() {
                     let pos = (index as u32 * tile_size_px.x as u32, 0);
                     let tile = tiles.subimage(Rectangle::new(pos, tile_size_px));
-                    tile_map.insert(glyph, tile);
+                    _tile_map.insert(glyph, tile);
                 }
-                Ok(tile_map)
+                Ok(_tile_map)
             }).wait().unwrap());
         }
 
@@ -426,24 +426,40 @@ impl Game {
             for y in camera_y..camera_y + camera_size_y as u32 {
                 //println!("camera_z: {:?}", camera_z);
                 let tile = map.get_tile(x, y, camera_z);
+                let pos_px = tile.pos
+                    .translate(origin_offset)
+                    .times(tile_size_px);
+                //println!("x: {:?}, y: {:?}, z: {:?}", x, y, camera_z);
+                //println!("{:?}", tile);
+                let tile_color = Color::from_hex(
+                    color_scheme.get_color_code(&tile.color));
+                if camera.zoom_factor > 0.5 {
                     if let Some(image) = tileset.get(&tile.glyph) {
-                        let pos_px = tile.pos
-                            .translate(origin_offset)
-                            .times(tile_size_px);
-                        //println!("x: {:?}, y: {:?}, z: {:?}", x, y, camera_z);
-                        //println!("{:?}", tile);
-                        let tile_color = Color::from_hex(
-                            color_scheme.get_color_code(&tile.color));
                         window.draw_ex(
                             &Rectangle::new(
-                                offset_px + pos_px, image.area().size()),
+                                offset_px + pos_px, image.area().size()
+                            ),
                             Blended(&image, tile_color),
                             Transform::scale(
-                                (camera.zoom_factor, camera.zoom_factor)),
+                                (camera.zoom_factor, camera.zoom_factor)
+                            ),
                             0 // Z value
                         );
                     }
                 }
+                else {
+                    window.draw_ex(
+                            &Rectangle::new(
+                                offset_px + pos_px, self.tile_size_px
+                            ),
+                            tile_color,
+                            Transform::scale(
+                                (camera.zoom_factor, camera.zoom_factor)),
+                            0 // Z value
+                        );
+
+                }
+            }
         }
 
         for entity in entities.iter() {
